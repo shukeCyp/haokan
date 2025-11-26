@@ -61,7 +61,7 @@ def load_data() -> List[Dict]:
 
 def save_crawl_batch(data: List[Dict]):
     """将本次爬取的数据保存为独立文件"""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     filename = f"crawl_{timestamp}.json"
     path = os.path.join(DATA_DIR, filename)
     with open(path, 'w', encoding='utf-8') as f:
@@ -103,7 +103,7 @@ def crawl_job():
         print("No accounts configured.")
         return
 
-    current_crawl_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    current_crawl_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     
     session_records = []
     
@@ -284,6 +284,7 @@ def get_dashboard_stats():
                 global_stats["last_month_total"] += parse_play_count(thirty_days_ago.get('play_count', '0'))
                 
         
+        acc_stats["total_play_count"] = acc_total_play
         global_stats["total_play_count"] += acc_total_play
         global_stats["video_count"] += acc_stats["video_count"]
         accounts_stats.append(acc_stats)

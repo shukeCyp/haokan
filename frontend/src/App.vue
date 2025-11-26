@@ -122,6 +122,14 @@
                 </el-table-column>
                 <el-table-column prop="video_count" label="视频总数" width="120" align="center" />
                 
+                <el-table-column prop="total_play_count" label="账号总播放量" width="150" align="right">
+                   <template #default="scope">
+                      <span :style="{ color: getTotalPlayColor(scope.row.total_play_count), fontWeight: 'bold' }">
+                        {{ formatNumber(scope.row.total_play_count) }}
+                      </span>
+                   </template>
+                </el-table-column>
+
                 <el-table-column label="1小时增长" width="150" align="right">
                   <template #default="scope">
                     <span :class="getHourlyTrendClass(scope.row.hour_growth)">
@@ -329,6 +337,21 @@ const formatNumber = (num) => {
   return num.toLocaleString()
 }
 
+const formatTime = (utcTimeStr) => {
+  if (!utcTimeStr) return ''
+  try {
+    // 假设后端存的是 UTC 时间 "YYYY-MM-DD HH:mm:ss"，转换为本地时间显示
+    const date = new Date(utcTimeStr.replace(' ', 'T') + 'Z')
+    const m = (date.getMonth() + 1).toString().padStart(2, '0')
+    const d = date.getDate().toString().padStart(2, '0')
+    const h = date.getHours().toString().padStart(2, '0')
+    const min = date.getMinutes().toString().padStart(2, '0')
+    return `${m}-${d} ${h}:${min}`
+  } catch (e) {
+    return utcTimeStr.substring(5, 16)
+  }
+}
+
 // 1小时增长颜色逻辑
 const getHourlyTrendClass = (val) => {
   // 1小时增长: 1W红色, 3K橙色, 1K绿色
@@ -358,6 +381,16 @@ const getPlayCountClass = (val) => {
 const getTrendClass = (val) => {
    // 默认回退
    return val > 0 ? 'trend-green' : (val < 0 ? 'trend-down' : 'trend-neutral')
+}
+
+const getTotalPlayColor = (val) => {
+  if (!val) return 'rgb(0,0,0)'
+  const max = 10000000 // 1000万
+  let ratio = val / max
+  if (ratio > 1) ratio = 1
+  // 黑(0,0,0) -> 红(255,0,0)
+  const r = Math.round(255 * ratio)
+  return `rgb(${r}, 0, 0)`
 }
 
 const handleSelect = (index) => {
@@ -486,7 +519,7 @@ const initChart = (data, dom, instance) => {
     tooltip: { trigger: 'axis' },
     xAxis: { 
       type: 'category', 
-      data: data.map(i => i.crawl_time.substring(5, 16))
+      data: data.map(i => formatTime(i.crawl_time))
     },
     yAxis: { type: 'value', scale: true },
     series: [{
